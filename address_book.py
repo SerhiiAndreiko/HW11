@@ -1,13 +1,15 @@
 from collections import UserDict
 from record import Record
 from fields import Name, Phone
+import pickle
+import os
 
 
 class AddressBook(UserDict):
     def iterator(self, rec_per_page=2):
         records = 0
         while records < len(self):
-            yield list(self.values())[records: records + rec_per_page]
+            yield "; ".join(str(rec) for rec in list(self.values())[records: records + rec_per_page])
             records += rec_per_page
         
 
@@ -23,27 +25,25 @@ class AddressBook(UserDict):
         result = map(str, self.data.values())
         return "\n".join(result)
     
+    
+    def load_data(self, file_name):
+        if os.path.exists(file_name):
+            with open (file_name, "rb") as f:
+                self.data = pickle.load(f)
+
+    
+    def save_data(self, file_name):
+        with open (file_name, "wb") as f:
+            pickle.dump(self.data, f)
 
 
-    def __next__(self) -> list[Record]:
-        if self._page_pos < len(self.data.keys()):
-            result = []
-            keys = list(self.data)[self._page_pos:self._page_pos+self.max_records_per_page]
-            for key in keys:
-                result.append(self.data[key])
-            self._page_pos += self.max_records_per_page
-            return result
-        self._page_pos = 0
-        raise StopIteration
-
-
-# if __name__ == "__main__":
-#     ab = AddressBook()
-#     rec1 = Record(Name("Vasy1"), Phone("380980634829"))
-#     rec2 = Record(Name("Vasya21"), Phone("380980634829"))
-#     rec3 = Record(Name("Jhon"), Phone("380980634829"))
-#     ab.add_record(rec1)
-#     ab.add_record(rec2)
-#     ab.add_record(rec3)
-#     for rec in ab.iterator():
-#         print(rec)
+if __name__ == "__main__":
+    ab = AddressBook()
+    rec1 = Record(Name("Vasy1"), Phone("380980634829"))
+    rec2 = Record(Name("Vasya21"), Phone("380980634829"))
+    rec3 = Record(Name("Jhon"), Phone("380980634829"))
+    ab.add_record(rec1)
+    ab.add_record(rec2)
+    ab.add_record(rec3)
+    for rec in ab.iterator(1):
+        print(rec)

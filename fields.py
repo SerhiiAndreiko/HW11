@@ -1,4 +1,10 @@
 from datetime import datetime
+import re
+
+class PhoneError(Exception):
+    pass
+
+
 
 class Field:
     def __init__(self, value=any)-> None:
@@ -41,13 +47,13 @@ class Phone(Field):
     @property
     def value(self):
         return self.__value
+    
 
     @value.setter
-    def value(self, __new_value):
-        try:
-            self.__value = str(int(__new_value))
-        except ValueError:
-            raise ValueError("wrong phone format")
+    def value(self, new_value):
+        if not re.match(r'\+?\d{9,15}', new_value):
+            raise PhoneError("Invalid phone number format")
+        self.__value = new_value
 
 
 class Birthday(Field):
@@ -60,7 +66,7 @@ class Birthday(Field):
     @property
     def value(self):
         return self.__value
-
+    
     @value.setter
     def value(self, __new_value):
         try:

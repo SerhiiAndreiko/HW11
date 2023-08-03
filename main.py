@@ -1,9 +1,10 @@
 from address_book import AddressBook
-from fields import Name, Phone, Birthday
+from fields import Name, Phone, Birthday, PhoneError
 from record import Record
 from functools import wraps
+from typing import Generator
 
-File_name ="Contact.bin"
+file_name ="Contact.bin"
 
 def parse_input(command_line: str) -> tuple[str, list]:
     for command in COMMANDS:
@@ -22,6 +23,8 @@ def input_error(func):
         except (KeyError, ValueError, IndexError):
             return "Sorry, there are not enough parameters or their value may be incorrect. "\
                    "Please use the help for more information."
+        except PhoneError as e:
+            return e
         # except Exception as e:
         #     return "**** Exception other" + e
     return wrapper  
@@ -75,6 +78,8 @@ def command_show_phone(*args) -> str:
      return a_book[str(user)].phones 
 
 def command_show_all(*args) -> str:
+    if args[0]:
+        return a_book.iterator(int(args[0]))
     if any(a_book.keys()):
         return a_book
     else:
@@ -104,8 +109,9 @@ def command_delete_record(*args) -> str:
 def command_delete_phone(*args) -> str:
     user = Name(args[0])
     phone = Phone(args[1])
-    a_book.remove_phone(user, Phone(phone))
-    return "Successfully" 
+    rec = a_book[str(user)]
+    return rec.remove_phone(phone)
+     
 
 def command_help(*args) -> str:
     command = " ".join(args)
@@ -115,6 +121,25 @@ def command_help(*args) -> str:
         return "List of commands: " + ", ".join(commands)
     else:
         return COMMANDS_HELP.get(command,  f"Help for this command '{command}' is not yet available")
+
+
+# def command_show_all(*args) -> str:
+#     if any(a_book.keys()):
+        
+#         if args and args[0].isdigit():
+#             page_number = int(args[0])
+#         else:
+#             page_number = 1
+#         for page in a_book.iterator():
+#             if page_number == 1:
+#                 for record in page:
+#                     print(record)
+#                 break
+#             else:
+#                 page_number -= 1
+#     else:
+#         return "No users found, you must first add name and phone"
+
 
 
 COMMAND_EXIT=("good bye", "close", "exit", "q")
@@ -147,7 +172,8 @@ COMMANDS_HELP = {
 }
 
 a_book = AddressBook()
-#.load(File_name)
+
+a_book.load_data(file_name) 
 
 def main():
     print("Welcome to the Address Book CLI")
@@ -158,7 +184,7 @@ def main():
             print("\r")
             break
         if user_input.lower() in COMMAND_EXIT:
-            # a_book.save(File_name)
+            a_book.save_data(file_name)
             break
 
         else:
@@ -169,7 +195,11 @@ def main():
                  print("Your command is not recognized, try to enter other command. "
                        "To get a list of all commands, you can use the 'help' command")
             else:
-                if result:
+                if isinstance(result,Generator):
+                    for rec in result:
+                        print(rec)
+                        input("For next page press any keey")
+                else:
                     print(result)
     print("Good bye")
 
